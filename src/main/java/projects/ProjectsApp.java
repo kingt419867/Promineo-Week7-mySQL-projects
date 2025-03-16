@@ -14,11 +14,14 @@ import projects.service.ProjectService;
 public class ProjectsApp {
 
 	private Scanner scanner = new Scanner(System.in); // scanner setup
-	private ProjectService projectService = new ProjectService(); 
+	private ProjectService projectService = new ProjectService();
+	private Project curProject = new Project();
 	
 	// @formatter:off
 	private List<String> operations = List.of( // This is the menu.
-		"1) Add a Project"
+		"1) Add a Project",
+		"2) List Projects",
+		"3) Select a Project"
 			);
 	// @formatter:on
 	
@@ -40,6 +43,12 @@ public class ProjectsApp {
 				case 1:
 					createProject();
 					break;
+				case 2:
+					listProjects();
+					break;
+				case 3:
+					selectProject();
+					break;
 				default:
 					System.out.println("\n" + selection + " is not a valid selection.  Try again.");
 					break;
@@ -50,6 +59,22 @@ public class ProjectsApp {
 		} // while
 
 	} // processUserSelections method
+
+	private void selectProject() {
+		listProjects();
+		Integer projectId = getIntInput("Enter a project ID to select a project");
+		curProject = null; // This deselects any previously selected current project, to avoid problems if an exception is thrown.
+		curProject = projectService.fetchProjectById(projectId);
+		if(Objects.isNull(curProject)) {
+			System.out.println("\nInvalid Project ID");
+		} // if
+	} //selectProject
+
+	private void listProjects() {
+		List<Project> projects = projectService.fetchAllProjects();
+		System.out.println("\nProjects:  ");
+		projects.forEach(project -> System.out.println("   " + project.getProjectId() + ": " + project.getProjectName()));
+	} // listProjects
 
 	private void createProject() {
 		//ProjectsApp projectName; // associated with 2 lines below...
@@ -117,6 +142,11 @@ public class ProjectsApp {
 	private void printOperations() {
 		System.out.println("\nThese are the available options:  (Press ENTER to quit.)"); // This prints out the menu options.
 		operations.forEach(op -> System.out.println("   " + op));
-	}
+		if(Objects.isNull(curProject)) {
+			System.out.println("\\nYou are not working with a project.");
+		} else {
+			System.out.println("\\nYou are working with project: " + curProject);
+		} // if
+	} // printOperations
 
 } // class
