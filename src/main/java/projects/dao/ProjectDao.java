@@ -57,6 +57,63 @@ public class ProjectDao extends DaoBase {
 		} // try-catch
 	} // insertProject
 
+	public boolean modifyProjectDetails(Project project) {
+		//@formatter:off
+		String sql = ""
+				+ "UPDATE " + PROJECT_TABLE + " SET "
+				+ "project_name = ?, estimated_hours = ?, actual_hours = ?, difficulty = ?, notes = ? "
+				+ "WHERE project_id = ?";
+		//@formatter:on
+		
+		try(Connection conn = DbConnection.getConnection()) {
+			startTransaction(conn);
+			System.out.println("Update transaction started for Project " + project.getProjectId());
+			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+				setParameter(stmt, 1, project.getProjectName(), String.class);
+				setParameter(stmt, 2, project.getEstimatedHours(), BigDecimal.class);
+				setParameter(stmt, 3, project.getActualHours(), BigDecimal.class);
+				setParameter(stmt, 4, project.getDifficulty(), Integer.class);
+				setParameter(stmt, 5, project.getNotes(), String.class);
+				setParameter(stmt, 6, project.getProjectId(), Integer.class); // Included to set the WHERE clause in the SQL statement.
+				boolean updated = stmt.executeUpdate() == 1; // This checks to see how many rows the executeUpdate updated.  If it only updated 1 row, it returns true for updated, which then gets returned for modifyProjectDetails.
+				System.out.println("During attempt of Project " + project.getProjectId() + " it updated " + updated + " records.");
+				commitTransaction(conn);
+				return updated;
+			} catch(Exception e) {
+				rollbackTransaction(conn);
+				System.out.println("Update failed");
+				throw new DbException(e);
+			} // inner try-catch
+		} catch(SQLException e) {
+			throw new DbException(e);
+		} // try-catch
+	} // modifyProjectDetails
+
+	public boolean deleteProcject(Project project) {
+		//@formatter:off
+		String sql = "DELETE FROM " + PROJECT_TABLE
+				+ " WHERE project_id = ?";
+		//@formatter:on
+		try(Connection conn = DbConnection.getConnection()) {
+			startTransaction(conn);
+			System.out.println("Starting deletion of Project " + project.getProjectId());
+			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+				setParameter(stmt, 1, project.getProjectId(), Integer.class); // Included to set the WHERE clause in the SQL statement.
+				boolean deleted = stmt.executeUpdate() == 1; // This checks to see how many rows the executeUpdate updated.  If it only updated 1 row, it returns true for updated, which then gets returned for modifyProjectDetails.
+				commitTransaction(conn);
+				System.out.println("Delete successful - from DAO");
+				return deleted;
+			} catch(Exception e) {
+				rollbackTransaction(conn);
+				System.out.println("Delete failed");
+				throw new DbException(e);
+			} // inner try-catch
+		} catch(SQLException e) {
+			throw new DbException(e);
+		} // try-catch
+	} // deleteProcject
+
+	
 	public List<Project> fetchAllProjects() { // This will list all the projects.
 		//@formatter:off
 		String sql = "SELECT * FROM " // This is the SQL statement for listing them.
@@ -160,5 +217,6 @@ public class ProjectDao extends DaoBase {
 				} // inner try
 			} // try
 	} // fetchCategoriesForProject
+
 
 } // class
